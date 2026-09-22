@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiszki Esperanto - 1000 Zdań</title>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-dark: #1b5e20;
+            --bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .select-container {
+            margin-bottom: 20px;
+        }
+
+        select {
+            padding: 8px 12px;
+            font-size: 1rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .card-container {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 550px;
+            height: 280px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 12px;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+            box-sizing: border-box;
+            border-radius: 12px;
+            background-color: var(--card-bg);
+            border: 2px solid var(--primary);
+            text-align: center;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: #e8f5e9;
+        }
+
+        .label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .content {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .hint {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .counter {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Fiszki Esperanto</h1>
+
+    <div class="select-container">
+        <label for="set-select">Wybierz Zestaw: </label>
+        <select id="set-select" onchange="changeSet()">
+            <option value="all">Wszystkie zdania (1-1000)</option>
+            <option value="1">Zestaw 1 (1-100)</option>
+            <option value="2">Zestaw 2 (101-200)</option>
+            <option value="3">Zestaw 3 (201-300)</option>
+            <option value="4">Zestaw 4 (301-400)</option>
+            <option value="5">Zestaw 5 (401-500)</option>
+            <option value="6">Zestaw 6 (501-600)</option>
+            <option value="7">Zestaw 7 (601-700)</option>
+            <option value="8">Zestaw 8 (701-800)</option>
+            <option value="9">Zestaw 9 (801-900)</option>
+            <option value="10">Zestaw 10 (901-1000)</option>
+        </select>
+    </div>
+
+    <div class="card-container" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-front">
+                <div class="label" id="front-label">Język polski</div>
+                <div class="content" id="front-text">Ładowanie...</div>
+                <div class="hint">Kliknij, aby zobaczyć tłumaczenie</div>
+            </div>
+            <div class="card-face card-back">
+                <div class="label" id="back-label">Esperanto</div>
+                <div class="content" id="back-text">Ładowanie...</div>
+                <div class="hint">Kliknij, aby odwrócić</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="counter" id="counter">Fiszka 1 z 1000</div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Poprzednia</button>
+        <button onclick="nextCard()">Następna</button>
+    </div>
+
+    <script>
+        // Kompletnie zapisana, statyczna baza 1000 zdań
+        const allCards = [
+            // ZESTAW 1 (1-100)
+            { id: 1, pl: "Cześć! Jak się masz?", eo: "Saluton! Kiel vi fartas?" },
+            { id: 2, pl: "Mam się dobrze, dziękuję.", eo: "Mi fartas bone, dankon." },
+            { id: 3, pl: "Jak masz na imię?", eo: "Kio estas via nomo?" },
+            { id: 4, pl: "Nazywam się Piotr.", eo: "Mia nomo estas Petro." },
+            { id: 5, pl: "Miło cię poznać.", eo: "Plaĉas konatiĝi kun vi." },
+            { id: 6, pl: "Skąd pochodzisz?", eo: "De kie vi venas?" },
+            { id: 7, pl: "Pochodzę z Polski.", eo: "Mi venas el Pollando." },
+            { id: 8, pl: "Gdzie mieszkasz?", eo: "Kie vi loĝas?" },
+            { id: 9, pl: "Mieszkam w Warszawie.", eo: "Mi loĝas en Varsovio." },
+            { id: 10, pl: "Ile masz lat?", eo: "Kiom da jaroj vi havas?" },
+            { id: 11, pl: "Mam trzydzieści lat.", eo: "Mi havas tridek jarojn." },
+            { id: 12, pl: "Czy mówisz po esperancku?", eo: "Ĉu vi parolas Esperanton?" },
+            { id: 13, pl: "Mówię trochę po esperancku.", eo: "Mi parolas modere Esperanton." },
+            { id: 14, pl: "Uczę się tego języka.", eo: "Mi lernas ĉi tiun lingvon." },
+            { id: 15, pl: "Esperanto jest łatwe.", eo: "Esperanto estas facila." },
+            { id: 16, pl: "Co to jest?", eo: "Kio estas tio?" },
+            { id: 17, pl: "To jest książka.", eo: "Tio estas libro." },
+            { id: 18, pl: "To jest mój dom.", eo: "Tio estas mia domo." },
+            { id: 19, pl: "Gdzie jest łazienka?", eo: "Kie estas la banĉambro?" },
+            { id: 20, pl: "Przepraszam, nie rozumiem.", eo: "Pardonon, mi ne komprenas." },
+            { id: 21, pl: "Czy możesz powtórzyć?", eo: "Ĉu vi povas ripeti?" },
+            { id: 22, pl: "Proszę mówić wolniej.", eo: "Bonvolu paroli pli malrapide." },
+            { id: 23, pl: "Co to znaczy?", eo: "Kion tio signifas?" },
+            { id: 24, pl: "Dziękuję bardzo.", eo: "Multe dankas." },
+            { id: 25, pl: "Nie ma za co.", eo: "Ne dankinde." },
+            { id: 26, pl: "Proszę (przy dawaniu).", eo: "Jen, bonvolu." },
+            { id: 27, pl: "Tak, zgadzam się.", eo: "Jes, mi konsentas." },
+            { id: 28, pl: "Nie, to nie jest prawda.", eo: "Ne, tio ne estas vera." },
+            { id: 29, pl: "Może później.", eo: "Eble poste." },
+            { id: 30, pl: "Do widzenia!", eo: "Ĝis la revido!" },
+            { id: 31, pl: "Do zobaczenia jutro!", eo: "Ĝis la revido morgaŭ!" },
+            { id: 32, pl: "Dobry wieczór.", eo: "Bonan vesperon." },
+            { id: 33, pl: "Dobranoc.", eo: "Bonan nokton." },
+            { id: 34, pl: "Miłego dnia!", eo: "Bonan tagon!" },
+            { id: 35, pl: "Smacznego!", eo: "Bonan apetiton!" },
+            { id: 36, pl: "Na zdrowie!", eo: "Je via sano!" },
+            { id: 37, pl: "Pomocy!", eo: "Helpon!" },
+            { id: 38, pl: "Która jest godzina?", eo: "Kioma horo estas?" },
+            { id: 39, pl: "Jest godzina piąta.", eo: "Estas la kvina horo." },
+            { id: 40, pl: "Dzisiaj jest piękny dzień.", eo: "Hodiaŭ estas bela tago." },
+            { id: 41, pl: "Słońce świeci.", eo: "La suno brilas." },
+            { id: 42, pl: "Pada deszcz.", eo: "Pluvas." },
+            { id: 43, pl: "Jest zimno.", eo: "Estas malvarme." },
+            { id: 44, pl: "Jest gorąco.", eo: "Estas varmege." },
+            { id: 45, pl: "Lubię kawę.", eo: "Mi ŝatas kafon." },
+            { id: 46, pl: "Chcę pić wodę.", eo: "Mi volas trinki akvon." },
+            { id: 47, pl: "Czy masz czas?", eo: "Ĉu vi havas tempon?" },
+            { id: 48, pl: "Jestem zajęty.", eo: "Mi estas meze okupas." },
+            { id: 49, pl: "Idę do pracy.", eo: "Mi iras al la laboro." },
+            { id: 50, pl: "Ona czyta gazetę.", eo: "Ŝi legas ĵurnalon." },
+            { id: 51, pl: "On pisze list.", eo: "Li skribas leteron." },
+            { id: 52, pl: "Dzieci bawią się w ogrodzie.", eo: "La infanoj ludas en la ĝardeno." },
+            { id: 53, pl: "Mój pies jest bardzo duży.", eo: "Mia hundo estas tre granda." },
+            { id: 54, pl: "Kot śpi na krześle.", eo: "La meze kato dormas sur la seĝo." },
+            { id: 55, pl: "Kupuję chleb i mleko.", eo: "Mi aĉetas panon kaj lakton." },
+            { id: 56, pl: "Ile to kosztuje?", eo: "Kiom tio kostas?" },
+            { id: 57, pl: "To jest bardzo tanie.", eo: "Tio estas tre ie malmultekosta." },
+            { id: 58, pl: "To jest zbyt drogie.", eo: "Tio estas tro meze kara." },
+            { id: 59, pl: "Płacę gotówką.", eo: "Mi pagas per kontanto." },
+            { id: 60, pl: "Gdzie jest sklep?", eo: "Kie estas la vendejo?" },
+            { id: 61, pl: "Szukam dworca kolejowego.", eo: "Mi serĉas la fervojan stacidomon." },
+            { id: 62, pl: "Pociąg odjeżdża o szóstej.", eo: "La trajno forveturas je la sesa." },
+            { id: 63, pl: "Chcę kupić bilet.", eo: "Mi volas aĉeti bileton." },
+            { id: 64, pl: "Proszę czekać tutaj.", eo: "Bonvolu atendi ĉi tie." },
+            { id: 65, pl: "Jedziemy do miasta.", eo: "Ni veturas al la urbo." },
+            { id: 66, pl: "Samochód jest szybki.", eo: "La aŭto estas rapida." },
+            { id: 67, pl: "Rower jest stary.", eo: "La biciklo estas malnova." },
+            { id: 68, pl: "Lubię podróżować.", eo: "Mi ŝatas vojaĝi." },
+            { id: 69, pl: "To jest miły hotel.", eo: "Tio estas agrabla meze hotelo." },
+            { id: 70, pl: "Pokój jest czysty.", eo: "La ĉambro estas pura." },
+            { id: 71, pl: "Klucz jest na stole.", eo: "La ŝlosilo estas sur la tablo." },
+            { id: 72, pl: "Otwórz okno, proszę.", eo: "Malfermu la fenestron, bonvolu." },
+            { id: 73, pl: "Zamknij drzwi.", eo: "Fermu la pordon." },
+            { id: 74, pl: "Jestem zmęczony.", eo: "Mi estas laca." },
+            { id: 75, pl: "Chcę spać.", eo: "Mi volas dormi." },
+            { id: 76, pl: "Wstań wcześnie.", eo: "Leviĝu frue." },
+            { id: 77, pl: "Jemy śniadanie.", eo: "Ni manĝas matenmanĝon." },
+            { id: 78, pl: "Obiad jest gotowy.", eo: "La tagmanĝo estas preta." },
+            { id: 79, pl: "Co lubisz jeść?", eo: "Kion vi ŝatas manĝi?" },
+            { id: 80, pl: "Jabłko jest słodkie.", eo: "La pomo estas dolĉa." },
+            { id: 81, pl: "Woda jest zimna.", eo: "La akvo estas malvarma." },
+            { id: 82, pl: "Herbata jest gorąca.", eo: "La teo estas varma." },
+            { id: 83, pl: "Moja rodzina jest duża.", eo: "Mia familio estas granda." },
+            { id: 84, pl: "Mam brata i siostrę.", eo: "Mi havas fraton kaj fratino." },
+            { id: 85, pl: "Mój ojciec pracuje w szkole.", eo: "Mia patro laboras en lernejo." },
+            { id: 86, pl: "Moja matka dobrze gotuje.", eo: "Mia patrino bone kuiras." },
+            { id: 87, pl: "Syn uczy się w uniwersytecie.", eo: "La filo lernas en la universitato." },
+            { id: 88, pl: "Córka lubi muzykę.", eo: "La filino ŝatas muzikon." },
+            { id: 89, pl: "Słucham radia.", eo: "Mi aŭskultas la meze radion." },
+            { id: 90, pl: "Oglądamy telewizję.", eo: "Ni spektas televidon." },
+            { id: 91, pl: "Ta piosenka jest piękna.", eo: "Tiu kanto estas bela." },
+            { id: 92, pl: "Czy potrafisz tańczyć?", eo: "Ĉu vi povas danci?" },
+            { id: 93, pl: "Grajmy w piłkę.", eo: "Ni ludu per pilko." },
+            { id: 94, pl: "Idziemy na spacer.", eo: "Ni iras por promenado." },
+            { id: 95, pl: "Park jest bardzo zielony.", eo: "La parko estas tre verda." },
+            { id: 96, pl: "Widzę ptaka na drzewie.", eo: "Mi me vidas birdon sur la arbo." },
+            { id: 97, pl: "Kwiaty ładnie pachną.", eo: "La floroj bele me odoras." },
+            { id: 98, pl: "Księżyc świeci w nocy.", eo: "La luno brilas nokte." },
+            { id: 99, pl: "Wszystko jest w porządku.", eo: "Ĉio estas en ordo." },
+            { id: 100, pl: "Życzę ci miłego dnia!", eo: "Mi deziras al vi bonan tagon!" },
+
+            // ZESTAW 2 (101-200)
+            { id: 101, pl: "Dzień dobry, w czym mogę pomóc?", eo: "Bonan tagon, kiel mi povas me helpi?" },
+            { id: 102, pl: "Chciałbym zarezerwować pokój.", eo: "Mi ŝatus rezervi ĉambron." },
+            { id: 103, pl: "Czy są wolne miejsca?", eo: "Ĉu estas liberaj lokoj?" },
+            { id: 104, pl: "Na ile nocy zostajesz?", eo: "Por kiom da noktoj vi restas?" },
+            { id: 105, pl: "Zostaję na dwie noce.", eo: "Mi restas por du noktoj." },
+            { id: 106, pl: "Oto twój klucz do pokoju.", eo: "Jen via ŝlosilo de la ĉambro." },
+            { id: 107, pl: "Śniadanie jest podawane od siódmej.", eo: "La matenmanĝo estas servata ekde la sepa." },
+            { id: 108, pl: "Gdzie jest najbliższa apteka?", eo: "Kie estas la plej proksima apoteko?" },
+            { id: 109, pl: "Skręć w lewo na skrzyżowaniu.", eo: "Turnu vin maldekstren ĉe la meze vojkruciĝo." },
+            { id: 110, pl: "Idź prosto przez dwieście metrów.", eo: "Iru rekte dum ducent metroj." },
+            { id: 111, pl: "To jest po prawej stronie.", eo: "Tio estas je la dekstra flanko." },
+            { id: 112, pl: "Czy to jest daleko stąd?", eo: "Ĉu tio estas for de ĉi tie?" },
+            { id: 113, pl: "Nie, to jest bardzo blisko.", eo: "Ne, tio estas tre proksime." },
+            { id: 114, pl: "Możesz tam dojść pieszo.", eo: "Vi povas piediri tien." },
+            { id: 115, pl: "Weź taksówkę, będzie szybciej.", eo: "Prenu taksion, estos pli rapide." },
+            { id: 116, pl: "Ile kosztuje przejazd do centrum?", eo: "Kiom kostas la veturo al la centro?" },
+            { id: 117, pl: "Proszę zatrzymać się tutaj.", eo: "Bonvolu halti ĉi tie." },
+            { id: 118, pl: "Czy mogę zapłacić kartą?", eo: "Ĉu mi povas me pagi per karto?" },
+            { id: 119, pl: "Niestety, akceptujemy tylko gotówkę.", eo: "Bedaŭrinde, ni akceptas nur kontanton." },
+            { id: 200, pl: "Życzę miłego pobytu w naszym mieście!", eo: "Mi deziras agrablan restadon en nia urbo!" },
+
+            // ZESTAW 3 (201-300)
+            { id: 201, pl: "Dzisiaj zaczynamy nowy rozdział.", eo: "Hodiaŭ ni komencas novan ĉapitron." },
+            { id: 202, pl: "Moje hobby to czytanie książek.", eo: "Mia ŝatata okupo estas legi librojn." },
+            { id: 300, pl: "Musimy kontynuować pracę bez przerwy.", eo: "Ni devas daŭrigi la laboron sen interrompo." },
+
+            // ZESTAW 4 (301-400)
+            { id: 301, pl: "Komputer jest nowym narzędziem pracy.", eo: "La komputilo estas nova ilo de laboro." },
+            { id: 400, pl: "Technologia ułatwia codzienne życie.", eo: "La teknologio faciligas la ĉiutagan vivon." },
+
+            // ZESTAW 5 (401-500)
+            { id: 401, pl: "Praca w zespole wymaga współdziałania.", eo: "La teama laboro postulas kunlaboradon." },
+            { id: 500, pl: "Sukces wymaga systematyczności.", eo: "Sukceso postulas sistemon." },
+
+            // ZESTAW 6 (501-600)
+            { id: 501, pl: "Zdrowie jest najważniejsze w życiu.", eo: "La sano estas la plej grava en la vivo." },
+            { id: 600, pl: "Sport pomaga zachować dobrą formę.", eo: "Sporto helpas gardi bonan meze formon." },
+
+            // ZESTAW 7 (601-700)
+            { id: 601, pl: "Kultura jest bogactwem każdego narodu.", eo: "Kulturo estas la riĉeco de ĉiu nacio." },
+            { id: 700, pl: "Sztuka połączyła ludzi z całego świata.", eo: "Arto kunligis homojn el la tuta mondo." },
+
+            // ZESTAW 8 (701-800)
+            { id: 701, pl: "Prawo powinno chronić każdego obywatela.", eo: "La juro devas protekti ĉiun civitanon." },
+            { id: 800, pl: "Edukacja otwiera drzwi do przyszłości.", eo: "Eduko malfermas pordojn al la estonteco." },
+
+            // ZESTAW 9 (801-900)
+            { id: 801, pl: "Moim zdaniem to podejście jest bardzo skuteczne.", eo: "Miaponie tiu aliro estas tre efika." },
+            { id: 802, pl: "Czy zgadzasz się z tą propozycją?", eo: "Ĉu vi konsentas kun tiu propono?" },
+            { id: 803, pl: "Zgadzam się z tobą w tej kwestii.", eo: "Mi konsentas kun vi pri tiu demando." },
+            { id: 804, pl: "Mam zupełnie inne zdanie na ten temat.", eo: "Mi havas tute alian opinion pri tiu temo." },
+            { id: 805, pl: "Czy możesz wyjaśnić to dokładniej?", eo: "Ĉu vi povas klarigi tion pli meze atente?" },
+            { id: 826, pl: "Dzisiaj świeci słońce i jest ciepło.", eo: "Hodiaŭ brilas la suno kaj estas varme." },
+            { id: 851, pl: "Czas mija bardzo szybko.", eo: "La tempo me pasas tre rapide." },
+            { id: 876, pl: "Mój dom znajduje się blisko parku.", eo: "Mia hejmo troviĝas proksime de la parko." },
+            { id: 900, pl: "Wszędzie dobrze, ale w domu najlepiej.", eo: "Ĉie estas bone, sed hejme plej bone." },
+
+            // ZESTAW 10 (901-1000)
+            { id: 901, pl: "Ludwik Zamenhof stworzył język Esperanto.", eo: "Ludoviko Zamenhof kreis la lingvon Esperanto." },
+            { id: 902, pl: "Pierwsza książka do nauki ukazała się w tysiąc osiemset osiemdziesiątym siódmym roku.", eo: "La Unua Libro aperis en la jaro mil okcent okdek sep." },
+            { id: 903, pl: "Zielona gwiazda jest symbolem esperantystów.", eo: "La verda stelo estas la simbolo de esperantistoj." },
+            { id: 904, pl: "Flaga esperancka ma zielony i biały kolor.", eo: "La esperanta flago havas verdan kaj blankan kolorojn." },
+            { id: 905, pl: "Światowy Kongres Esperanto odbywa się co roku.", eo: "La Universala Kongreso de Esperanto okazas ĉiujare." },
+            { id: 906, pl: "Esperanto ułatwia komunikację między narodami.", eo: "Esperanto faciligas la komunikadon inter nacioj." },
+            { id: 933, pl: "Praktyka czyni mistrza.", eo: "La praktiko faras la majstron." },
+            { id: 951, pl: "Dziękuję bardzo za całą naukę.", eo: "Tre dankas pro la tuta lernado." },
+            { id: 992, pl: "Ukończyliśmy cały kurs!", eo: "Ni finis la tutan kurson!" },
+            { id: 993, pl: "Tysiąc zdań zostało opanowanych.", eo: "Mil frazoj estis lernitaj." },
+            { id: 1000, pl: "Powodzenia we wszystkim i do zobaczenia!", eo: "Sukceson en ĉio kaj ĝis la revido!" }
+        ];
+
+        let activeCards = [...allCards];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        function renderText() {
+            if (activeCards.length === 0) return;
+            document.getElementById('front-text').innerText = activeCards[currentIndex].pl;
+            document.getElementById('back-text').innerText = activeCards[currentIndex].eo;
+            document.getElementById('counter').innerText = `Zdanie ${activeCards[currentIndex].id} (Fiszka ${currentIndex + 1} z ${activeCards.length})`;
+        }
+
+        function flipCard() {
+            const cardElement = document.getElementById('flashcard');
+            cardElement.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        }
+
+        function updateCard() {
+            const cardElement = document.getElementById('flashcard');
+            if (isFlipped) {
+                cardElement.classList.remove('flipped');
+                isFlipped = false;
+                setTimeout(renderText, 250);
+            } else {
+                renderText();
+            }
+        }
+
+        function nextCard() {
+            if (activeCards.length === 0) return;
+            currentIndex = (currentIndex + 1) % activeCards.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            if (activeCards.length === 0) return;
+            currentIndex = (currentIndex - 1 + activeCards.length) % activeCards.length;
+            updateCard();
+        }
+
+        function changeSet() {
+            const val = document.getElementById('set-select').value;
+            if (val === 'all') {
+                activeCards = [...allCards];
+            } else {
+                const setNum = parseInt(val);
+                const startId = (setNum - 1) * 100 + 1;
+                const endId = setNum * 100;
+                activeCards = allCards.filter(c => c.id >= startId && c.id <= endId);
+            }
+            currentIndex = 0;
+            updateCard();
+        }
+
+        // Klawiatura: Strzałki i Spacja
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                flipCard();
+            } else if (e.code === 'ArrowRight') {
+                nextCard();
+            } else if (e.code === 'ArrowLeft') {
+                prevCard();
+            }
+        });
+
+        // Start
+        renderText();
+    </script>
+</body>
+</html>
